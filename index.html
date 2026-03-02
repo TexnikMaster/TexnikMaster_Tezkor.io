@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TexnikMaster Tezkor | Premium Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #F8F9FD; }
+        :root { --brand: #8A2BE2; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .text-brand { color: var(--brand); }
+        .bg-brand { background-color: var(--brand); }
+        .modal-animate { animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(138, 43, 226, 0.1); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-[#1A1A1A] pb-10">
+
+    <nav class="glass sticky top-0 z-[100] border-b border-white/50 px-5 py-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex flex-col">
+                <span class="text-2xl font-black tracking-tighter text-brand italic">TexnikMaster</span>
+                <span class="text-[9px] font-bold uppercase tracking-[3px] text-gray-400">Tezkor Shop</span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <select id="roleSelector" onchange="checkAdminPassword(this.value)" class="bg-purple-50 text-brand text-[10px] font-black rounded-full px-4 py-2 outline-none cursor-pointer">
+                    <option value="guest">GUEST</option>
+                    <option value="admin">ADMIN</option>
+                </select>
+                <button onclick="toggleCart()" class="relative p-3 bg-white rounded-2xl shadow-sm border border-gray-100 active:scale-90 transition">
+                    🛒 <span id="cartCount" class="absolute -top-1 -right-1 bg-brand text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center border-2 border-white">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <section id="adminPanel" class="hidden container mx-auto px-5 py-6">
+        <div class="bg-white p-8 rounded-[35px] shadow-2xl border border-purple-50">
+            <h2 class="text-xl font-black mb-6 text-brand uppercase tracking-widest">Управление Складом</h2>
+            <form id="productForm" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" id="pName" placeholder="Название товара" required class="p-4 bg-gray-50 rounded-2xl outline-none border border-transparent focus:border-brand transition">
+                    <input type="number" id="pPrice" placeholder="Цена (сум)" required class="p-4 bg-gray-50 rounded-2xl outline-none border border-transparent focus:border-brand transition">
+                    <input type="text" id="pImage" placeholder="Ссылка на фото (URL)" class="p-4 bg-gray-50 rounded-2xl outline-none border border-transparent focus:border-brand transition">
+                </div>
+                <textarea id="pDesc" placeholder="Подробное описание и характеристики товара..." rows="3" class="w-full p-4 bg-gray-50 rounded-2xl outline-none border border-transparent focus:border-brand transition"></textarea>
+                <button type="submit" class="w-full bg-brand text-white py-4 rounded-2xl font-black shadow-lg shadow-purple-100 hover:opacity-90 active:scale-[0.98] transition-all">
+                    ОПУБЛИКОВАТЬ ТОВАР
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <main class="container mx-auto px-5 py-8">
+        <div id="productGrid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6"></div>
+    </main>
+
+    <div id="productModal" class="fixed inset-0 bg-black/40 z-[150] hidden flex items-center justify-center p-4 backdrop-blur-md">
+        <div class="bg-white w-full max-w-5xl rounded-[45px] overflow-hidden shadow-2xl modal-animate flex flex-col md:flex-row max-h-[90vh]">
+            <div class="md:w-1/2 bg-[#F3F4F6] flex items-center justify-center relative">
+                <img id="modalImg" src="" class="w-full h-full object-contain p-10">
+                <button onclick="closeProductModal()" class="absolute top-6 left-6 bg-white/80 w-10 h-10 rounded-full md:hidden">✕</button>
+            </div>
+            <div class="md:w-1/2 p-10 md:p-14 flex flex-col overflow-y-auto">
+                <button onclick="closeProductModal()" class="hidden md:block self-end text-3xl text-gray-300 hover:text-black transition">&times;</button>
+                <h2 id="modalTitle" class="text-3xl font-black mb-2 text-[#1A1A1A] leading-tight"></h2>
+                <div id="modalPrice" class="text-3xl font-black text-brand mb-8 italic"></div>
+                
+                <div class="space-y-4 mb-10">
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Описание товара:</p>
+                    <p id="modalDesc" class="text-gray-500 text-sm leading-relaxed font-medium"></p>
+                </div>
+
+                <div class="mt-auto">
+                    <button id="modalBuyBtn" class="w-full bg-brand text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-purple-100 active:scale-95 transition">В КОРЗИНУ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cartModal" class="fixed inset-0 bg-black/30 z-[200] hidden flex justify-end backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md h-full p-8 shadow-2xl flex flex-col modal-animate">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-2xl font-black uppercase">Ваш заказ</h2>
+                <button onclick="toggleCart()" class="text-3xl text-gray-300 hover:text-black">&times;</button>
+            </div>
+            <div id="cartItems" class="flex-grow space-y-4 overflow-y-auto pr-2"></div>
+            <div class="pt-8 mt-4 border-t border-gray-100">
+                <div class="flex justify-between text-2xl font-black mb-8">
+                    <span>Итого:</span>
+                    <span id="cartTotal" class="text-brand">0 сум</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-6">
+                    <button onclick="setMethod('cash')" id="m-cash" class="py-4 rounded-2xl text-[10px] font-black border-2 border-brand bg-purple-50 text-brand transition-all">НАЛИЧНЫЕ</button>
+                    <button onclick="setMethod('click')" id="m-click" class="py-4 rounded-2xl text-[10px] font-black bg-gray-50 text-gray-400 border-2 border-transparent transition-all tracking-widest uppercase">Click</button>
+                </div>
+                <button onclick="processCheckout()" class="w-full bg-[#1A1A1A] text-white py-5 rounded-[24px] font-black text-lg active:scale-95 transition">ОФОРМИТЬ</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="finalNotice" class="fixed inset-0 bg-brand z-[300] hidden flex items-center justify-center p-6 backdrop-blur-xl">
+        <div class="bg-white w-full max-w-md rounded-[50px] p-12 text-center shadow-2xl modal-animate">
+            <div class="text-6xl mb-6">🛍️</div>
+            <h3 class="text-3xl font-black mb-4 uppercase tracking-tighter">Позвоните нам!</h3>
+            <p class="text-gray-400 text-sm mb-10 font-medium leading-relaxed">Для подтверждения заказа и способа оплаты, пожалуйста, свяжитесь с нашим мастером:</p>
+            <div class="bg-gray-50 p-6 rounded-[35px] mb-8 border border-gray-100">
+                <a href="tel:+998332000144" class="text-brand text-2xl font-black tracking-tighter hover:underline">+998 33 200 01 44</a>
+            </div>
+            <button onclick="document.getElementById('finalNotice').classList.add('hidden')" class="text-gray-300 font-bold text-[10px] uppercase tracking-widest hover:text-black transition">Вернуться в магазин</button>
+        </div>
+    </div>
+
+    <script>
+        // 1. КОНФИГУРАЦИЯ И ПАРОЛЬ (Скрытый 5222TM)
+        const _0xkey = "NTIyMlRN"; 
+        let products = JSON.parse(localStorage.getItem('tm_products')) || [];
+        let cart = [];
+        let currentRole = 'guest';
+        let currentPayMethod = 'cash';
+
+        function checkAdminPassword(val) {
+            if (val === 'admin') {
+                if (btoa(prompt("КЛЮЧ ДОСТУПА:")) === _0xkey) {
+                    currentRole = 'admin';
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                } else {
+                    alert("ДОСТУП ЗАПРЕЩЕН!");
+                    document.getElementById('roleSelector').value = 'guest';
+                }
+            } else {
+                currentRole = 'guest';
+                document.getElementById('adminPanel').classList.add('hidden');
+            }
+            renderProducts();
+        }
+
+        // 2. ФОРМАТИРОВАНИЕ ДЕНЕГ
+        function formatSum(n) { return new Intl.NumberFormat('uz-UZ').format(n) + ' сум'; }
+
+        // 3. РЕНДЕР ТОВАРОВ (Главная страница)
+        function renderProducts() {
+            const grid = document.getElementById('productGrid');
+            grid.innerHTML = '';
+            products.forEach((p, i) => {
+                grid.innerHTML += `
+                    <div class="product-card bg-white rounded-[35px] p-4 border border-white shadow-sm cursor-pointer transition-all duration-300 relative group">
+                        <div onclick="openProductModal(${i})">
+                            <div class="h-44 overflow-hidden rounded-[28px] mb-4 bg-gray-50">
+                                <img src="${p.image || 'https://placehold.co/400'}" class="w-full h-full object-cover">
+                            </div>
+                            <h3 class="font-bold text-xs text-gray-700 px-2 line-clamp-1">${p.name}</h3>
+                            <div class="text-brand font-black text-lg px-2 mt-1 italic">${formatSum(p.price)}</div>
+                        </div>
+                        ${currentRole === 'admin' ? `
+                            <div class="flex space-x-2 mt-3 px-2">
+                                <button onclick="editProduct(${i})" class="flex-1 bg-blue-50 text-blue-600 py-2 rounded-xl text-[9px] font-black hover:bg-blue-600 hover:text-white transition">ИЗМЕНИТЬ</button>
+                                <button onclick="deleteProduct(${i})" class="bg-red-50 text-red-500 px-3 py-2 rounded-xl text-[9px] font-black hover:bg-red-500 hover:text-white transition">✕</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+        }
+
+        // 4. УПРАВЛЕНИЕ ТОВАРОМ (Модалка и Описание)
+        function openProductModal(i) {
+            const p = products[i];
+            document.getElementById('modalTitle').innerText = p.name;
+            document.getElementById('modalPrice').innerText = formatSum(p.price);
+            document.getElementById('modalImg').src = p.image || 'https://placehold.co/400';
+            document.getElementById('modalDesc').innerText = p.desc || "Характеристики не указаны. Оригинальное качество от TexnikMaster Tezkor.";
+            
+            document.getElementById('modalBuyBtn').onclick = () => { addToCart(i); closeProductModal(); };
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() { document.getElementById('productModal').classList.add('hidden'); }
+
+        // 5. ГЛУБОКОЕ РЕДАКТИРОВАНИЕ (ДЛЯ АДМИНА)
+        function editProduct(i) {
+            const p = products[i];
+            const name = prompt("Название:", p.name);
+            const price = prompt("Цена:", p.price);
+            const desc = prompt("Описание товара:", p.desc || "");
+            const img = prompt("Ссылка на фото:", p.image || "");
+
+            if (name && price) {
+                products[i] = { name, price, desc, image: img };
+                localStorage.setItem('tm_products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        function deleteProduct(i) {
+            if(confirm('Удалить товар навсегда?')) {
+                products.splice(i, 1);
+                localStorage.setItem('tm_products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        // 6. ДОБАВЛЕНИЕ НОВОГО ТОВАРА
+        document.getElementById('productForm').onsubmit = (e) => {
+            e.preventDefault();
+            products.push({
+                name: document.getElementById('pName').value,
+                price: document.getElementById('pPrice').value,
+                image: document.getElementById('pImage').value,
+                desc: document.getElementById('pDesc').value
+            });
+            localStorage.setItem('tm_products', JSON.stringify(products));
+            e.target.reset();
+            renderProducts();
+            alert("Товар добавлен!");
+        };
+
+        // 7. КОРЗИНА И ОФОРМЛЕНИЕ
+        function addToCart(i) {
+            cart.push(products[i]);
+            updateCart();
+        }
+
+        function updateCart() {
+            document.getElementById('cartCount').innerText = cart.length;
+            const list = document.getElementById('cartItems');
+            let total = 0; list.innerHTML = '';
+            cart.forEach((p, i) => {
+                total += parseFloat(p.price);
+                list.innerHTML += `
+                    <div class="flex items-center space-x-4 bg-gray-50 p-3 rounded-2xl">
+                        <img src="${p.image}" class="w-12 h-12 rounded-xl object-cover border border-white shadow-sm">
+                        <div class="flex-grow">
+                            <h4 class="text-[10px] font-bold line-clamp-1 text-gray-400">${p.name}</h4>
+                            <p class="text-brand font-black text-xs">${formatSum(p.price)}</p>
+                        </div>
+                        <button onclick="cart.splice(${i},1);updateCart()" class="text-red-400 font-bold px-2">✕</button>
+                    </div>
+                `;
+            });
+            document.getElementById('cartTotal').innerText = formatSum(total);
+        }
+
+        function setMethod(m) {
+            currentPayMethod = m;
+            document.getElementById('m-cash').className = m === 'cash' ? 'py-4 rounded-2xl text-[10px] font-black border-2 border-brand bg-purple-50 text-brand' : 'py-4 rounded-2xl text-[10px] font-black bg-gray-50 text-gray-400 border-2 border-transparent transition-all tracking-widest';
+            document.getElementById('m-click').className = m === 'click' ? 'py-4 rounded-2xl text-[10px] font-black border-2 border-blue-500 bg-blue-50 text-blue-500' : 'py-4 rounded-2xl text-[10px] font-black bg-gray-50 text-gray-400 border-2 border-transparent transition-all tracking-widest';
+        }
+
+        function processCheckout() {
+            if (cart.length === 0) return alert("Корзина пуста!");
+            document.getElementById('finalNotice').classList.remove('hidden');
+        }
+
+        function toggleCart() { document.getElementById('cartModal').classList.toggle('hidden'); }
+
+        renderProducts();
+    </script>
+</body>
+</html>
